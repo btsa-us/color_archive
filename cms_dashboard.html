@@ -646,7 +646,7 @@ async function autoFetchFromSharePoint(){
   if(syncBtn){ syncBtn.textContent='Syncing...'; syncBtn.disabled=true; }
 
   // Convert SharePoint share URL to direct download URL
-  const shareUrl = SHAREPOINT_CSV_URL;
+  const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/btsa-us/color_archive/main/color-archive.csv';
   const downloadUrl = shareUrl.includes('?')
     ? shareUrl + '&download=1'
     : shareUrl + '?download=1';
