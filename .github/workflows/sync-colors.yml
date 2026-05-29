@@ -15,12 +15,14 @@ jobs:
         env:
           CSV_URL: ${{ secrets.ONEDRIVE_CSV_URL }}
         run: |
-          curl -L --output color-archive.csv \
-            --url "$CSV_URL" \
-            --header "Accept: text/csv" \
-            -v 2>&1 | tail -20
+          python3 -c "
+          import urllib.request, os
+          url = os.environ['CSV_URL']
+          urllib.request.urlretrieve(url, 'color-archive.csv')
+          print('Downloaded successfully')
+          "
           ls -la color-archive.csv
-          head -3 color-archive.csv
+          head -2 color-archive.csv
 
       - name: Commit and push
         run: |
