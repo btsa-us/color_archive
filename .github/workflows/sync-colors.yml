@@ -9,11 +9,18 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download CSV from OneDrive
+        env:
+          CSV_URL: ${{ secrets.ONEDRIVE_CSV_URL }}
         run: |
-          curl -L "${{ secrets.ONEDRIVE_CSV_URL }}" -o color-archive.csv
+          curl -L --output color-archive.csv \
+            --url "$CSV_URL" \
+            --header "Accept: text/csv" \
+            -v 2>&1 | tail -20
+          ls -la color-archive.csv
+          head -3 color-archive.csv
 
       - name: Commit and push
         run: |
