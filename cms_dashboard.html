@@ -648,11 +648,31 @@ function getDirectURL(sharingUrl){
 async function autoFetchFromSharePoint(){
   const syncBtn = document.getElementById('syncBtn');
   if(syncBtn){ syncBtn.textContent='Syncing...'; syncBtn.disabled=true; }
-  try {
-    const directUrl = getDirectURL(SHAREPOINT_CSV_URL);
-    const res = await fetch(directUrl);
-    if(!res.ok) throw new Error('Fetch failed: '+res.status);
-    const text = await res.text();
+
+  const directUrl = getDirectURL(SHAREPOINT_CSV_URL);
+  const proxies = [
+    `https://corsproxy.io/?${encodeURIComponent(directUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`,
+    directUrl
+  ];
+
+  let text = null;
+  for(const url of proxies){
+    try{
+      const res = await fetch(url);
+      if(!res.ok) continue;
+      const t = await res.text();
+      if(t && t.length > 100){ text = t; break; }
+    } catch(e){ continue; }
+  }
+
+  if(!text){
+    toast('Could not sync — upload CSV manually or check OneDrive sharing settings');
+    if(syncBtn){ syncBtn.textContent='Sync from SharePoint'; syncBtn.disabled=false; }
+    return;
+  }
+
+  try{
     const rows = parseCSVText(text);
     if(rows.length===0) throw new Error('No data');
     const newEntries = rowsToEntries(rows);
@@ -667,11 +687,10 @@ async function autoFetchFromSharePoint(){
     populateFilters();
     renderList();
     const syncStatus = document.getElementById('syncStatus');
-    if(syncStatus) syncStatus.textContent = 'Last synced: '+new Date().toLocaleTimeString();
+    if(syncStatus) syncStatus.textContent = 'Synced '+new Date().toLocaleTimeString();
     toast('Synced from SharePoint ✓');
   } catch(err){
-    console.warn('SharePoint auto-fetch failed:',err);
-    toast('Could not sync from SharePoint — using local data');
+    toast('Sync failed — check file format');
   } finally {
     if(syncBtn){ syncBtn.textContent='Sync from SharePoint'; syncBtn.disabled=false; }
   }
