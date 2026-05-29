@@ -645,31 +645,17 @@ async function autoFetchFromSharePoint(){
   const syncBtn = document.getElementById('syncBtn');
   if(syncBtn){ syncBtn.textContent='Syncing...'; syncBtn.disabled=true; }
 
-  // Convert SharePoint share URL to direct download URL
-  const shareUrl = SHAREPOINT_CSV_URL;
-  const downloadUrl = shareUrl.includes('?')
-    ? shareUrl + '&download=1'
-    : shareUrl + '?download=1';
-
-  const proxies = [
-    `https://corsproxy.io/?${encodeURIComponent(downloadUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(downloadUrl)}`,
-    `https://corsproxy.io/?${encodeURIComponent(shareUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(shareUrl)}`
-  ];
-
   let text = null;
-  for(const url of proxies){
-    try{
-      const res = await fetch(url);
-      if(!res.ok) continue;
+  try{
+    const res = await fetch(GITHUB_CSV_URL + '?t=' + Date.now());
+    if(res.ok){
       const t = await res.text();
-      if(t && t.length > 50){ text = t; break; }
-    } catch(e){ continue; }
-  }
+      if(t && t.length > 50) text = t;
+    }
+  } catch(e){ console.error('GitHub fetch error:', e); }
 
   if(!text){
-    toast('Could not sync — upload CSV manually or check OneDrive sharing settings');
+    toast('Could not sync — check GitHub connection');
     if(syncBtn){ syncBtn.textContent='Sync from SharePoint'; syncBtn.disabled=false; }
     return;
   }
