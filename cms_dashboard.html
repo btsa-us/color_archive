@@ -672,7 +672,7 @@ async function autoFetchFromSharePoint(){
       const res = await fetch(url);
       if(!res.ok) continue;
       const t = await res.text();
-      if(t && t.length > 100){ text = t; break; }
+      if(t && t.length > 50){ text = t; break; }
     } catch(e){ continue; }
   }
 
@@ -683,7 +683,16 @@ async function autoFetchFromSharePoint(){
   }
 
   try{
-    const rows = parseCSVText(text);
+    // Try parsing as Excel binary first, fallback to CSV text
+    let rows = [];
+    try {
+      const ab = new Uint8Array(text.split('').map(c=>c.charCodeAt(0))).buffer;
+      const wb = XLSX.read(ab, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+    } catch(xlsxErr) {
+      rows = parseCSVText(text);
+    }
     if(rows.length===0) throw new Error('No data');
     const newEntries = rowsToEntries(rows);
     const existingMap={};
