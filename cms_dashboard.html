@@ -638,11 +638,18 @@ function clearPhoto(){
   document.getElementById('photoBtns').style.display='none';
 }
 
-const SHAREPOINT_CSV_URL = 'https://btsaus-my.sharepoint.com/:x:/g/personal/victor_btsa_us/IQA12luzRoZdRrpa4NvRP4dsAfwELIjU1zPe8S6TWXacPPs?e=KDlpxs';
+const SHAREPOINT_CSV_URL = 'https://btsaus-my.sharepoint.com/:x:/g/personal/victor_btsa_us/IQA12luzRoZdRrpa4NvRP4dsAfwELIjU1zPe8S6TWXacPPs?e=m8xGtu';
 
 function getDirectURL(sharingUrl){
   const b64 = btoa(sharingUrl).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   return `https://api.onedrive.com/v1.0/shares/u!${b64}/root/content`;
+}
+
+function getDownloadURL(sharingUrl){
+  // Force direct CSV download from SharePoint
+  return sharingUrl.includes('?')
+    ? sharingUrl + '&download=1'
+    : sharingUrl + '?download=1';
 }
 
 async function autoFetchFromSharePoint(){
@@ -650,7 +657,10 @@ async function autoFetchFromSharePoint(){
   if(syncBtn){ syncBtn.textContent='Syncing...'; syncBtn.disabled=true; }
 
   const directUrl = getDirectURL(SHAREPOINT_CSV_URL);
+  const downloadUrl = getDownloadURL(SHAREPOINT_CSV_URL);
   const proxies = [
+    `https://corsproxy.io/?${encodeURIComponent(downloadUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(downloadUrl)}`,
     `https://corsproxy.io/?${encodeURIComponent(directUrl)}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`,
     directUrl
