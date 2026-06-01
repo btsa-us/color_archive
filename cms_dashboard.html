@@ -640,22 +640,30 @@ function clearPhoto(){
 
 // GitHub raw URL — updated daily by GitHub Action
 const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/btsa-us/color_archive/main/color-archive.csv';
+const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1rAfQZPFTfABk9uSmvqfMNDKIt_wyUDrKHqPRmzS4N8M/export?format=csv';
 
 async function autoFetchFromSharePoint(){
   const syncBtn = document.getElementById('syncBtn');
   if(syncBtn){ syncBtn.textContent='Syncing...'; syncBtn.disabled=true; }
 
   let text = null;
-  try{
-    const res = await fetch(GITHUB_CSV_URL + '?t=' + Date.now());
-    if(res.ok){
-      const t = await res.text();
-      if(t && t.length > 50) text = t;
-    }
-  } catch(e){ console.error('GitHub fetch error:', e); }
+  // Try Google Sheets first, then GitHub as fallback
+  const sources = [
+    GOOGLE_SHEET_CSV_URL + '&t=' + Date.now(),
+    GITHUB_CSV_URL + '?t=' + Date.now()
+  ];
+  for(const url of sources){
+    try{
+      const res = await fetch(url);
+      if(res.ok){
+        const t = await res.text();
+        if(t && t.length > 50){ text = t; break; }
+      }
+    } catch(e){ console.error('Fetch error:', e); }
+  }
 
   if(!text){
-    toast('Could not sync — check GitHub connection');
+    toast('Could not sync — check Google Sheet sharing settings');
     if(syncBtn){ syncBtn.textContent='Sync from SharePoint'; syncBtn.disabled=false; }
     return;
   }
