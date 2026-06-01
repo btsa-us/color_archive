@@ -4,286 +4,341 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BTSA — Color Archive CMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f7f6f3;
-  --surface:#ffffff;
-  --border:#e4e2db;
-  --border-soft:#eeece7;
-  --text:#111;
-  --text-muted:#888;
-  --text-hint:#bbb;
-  --accent:#111;
-  --live-bg:#e8f4e8;
-  --live-text:#2a6b2a;
-  --draft-bg:#f0efeb;
-  --draft-text:#777;
-  --font:'Helvetica Neue',Helvetica,Arial,sans-serif;
-  --radius:6px;
-  --radius-lg:10px;
+:root {
+  --bg: #f5f4f0; --surface: #fff; --border: #e2e0d8; --border-strong: #c8c5ba;
+  --text: #1a1916; --text-2: #6b6860; --text-3: #9e9b94;
+  --accent: #1a1916; --accent-h: #333128;
+  --green: #2d6a4f; --green-bg: #eaf3ee;
+  --red: #c0392b; --red-bg: #fdf0ee; --yellow-bg: #fdf8ee;
+  --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
+  --r: 6px; --rl: 10px;
 }
-body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 13px; line-height: 1.5; min-height: 100vh; }
 
-/* ── HEADER ── */
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;height:52px;gap:16px;position:sticky;top:0;z-index:100}
-.header-logo{font-size:12px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase}
-.header-divider{width:1px;height:20px;background:var(--border)}
-.header-title{font-size:13px;color:var(--text-muted)}
-.header-actions{margin-left:auto;display:flex;gap:8px}
+/* NAV */
+.topnav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 50px; position: sticky; top: 0; z-index: 100; }
+.nav-left { display: flex; align-items: center; gap: 12px; }
+.logo { font-weight: 600; font-size: 13px; letter-spacing: 0.08em; }
+.breadcrumb { color: var(--text-2); font-size: 13px; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.sync-time { font-family: var(--mono); font-size: 11px; color: var(--text-3); margin-right: 4px; }
+#back-btn { display: none; align-items: center; gap: 6px; background: var(--surface); color: var(--text); border: 1.5px solid var(--border-strong); border-radius: var(--r); padding: 6px 12px; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; }
+#back-btn:hover { background: var(--bg); border-color: var(--accent); }
 
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:12px;font-weight:600;letter-spacing:0.03em;border-radius:var(--radius);cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:background 0.12s,border-color 0.12s;white-space:nowrap}
-.btn:hover{background:#f5f4f1;border-color:#ccc}
-.btn-primary{background:var(--text);color:#fff;border-color:var(--text)}
-.btn-primary:hover{background:#333}
-.btn-sm{padding:5px 10px;font-size:11px}
-.btn-ghost{border-color:transparent;background:transparent}
-.btn-ghost:hover{background:#f0efe9;border-color:transparent}
-.btn-publish{background:#2a6b2a;color:#fff;border-color:#2a6b2a}
-.btn-publish:hover{background:#1f521f}
-.btn-danger{color:#c00;border-color:#fcc}
-.btn-danger:hover{background:#fff5f5;border-color:#faa}
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--r); font-family: var(--sans); font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all .15s; white-space: nowrap; }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--text-2); }
+.btn-ghost:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-h); }
+.btn-danger { background: transparent; border-color: transparent; color: var(--red); }
+.btn-danger:hover { background: var(--red-bg); }
+.btn-publish { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-publish:hover { background: #225a3e; }
 
-/* ── VIEWS ── */
-.view{display:none;padding:24px 28px}
-.view.active{display:block}
+/* PAGES */
+.page { display: none; }
+.page.active { display: block; }
 
-/* ── LIST VIEW ── */
-.list-topbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.list-topbar h1{font-size:18px;font-weight:600;margin-right:4px}
-.list-count{font-size:12px;color:var(--text-muted);background:var(--draft-bg);padding:2px 8px;border-radius:20px}
-.filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.filters input,.filters select{font-size:12px;padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none}
-.filters input{min-width:220px}
-.filters input:focus,.filters select:focus{border-color:#aaa}
+/* LIST PAGE */
+.main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.page-title { font-size: 18px; font-weight: 600; }
+.entry-count { font-family: var(--mono); font-size: 12px; color: var(--text-3); margin-left: 10px; }
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+.search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+.search-input { width: 100%; padding: 7px 10px 7px 32px; border: 1px solid var(--border); border-radius: var(--r); font-family: var(--sans); font-size: 12px; background: var(--surface); color: var(--text); outline: none; }
+.search-input:focus { border-color: var(--border-strong); }
+select.filter { padding: 6px 28px 6px 10px; border: 1px solid var(--border); border-radius: var(--r); font-family: var(--sans); font-size: 12px; background: var(--surface); color: var(--text); cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239e9b94'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+select.filter:focus { border-color: var(--border-strong); }
+.spacer { flex: 1; }
+.view-toggle { display: flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+.view-btn { padding: 6px 10px; cursor: pointer; border: none; background: transparent; color: var(--text-3); display: flex; align-items: center; transition: all .15s; }
+.view-btn:first-child { border-right: 1px solid var(--border); }
+.view-btn.active { background: var(--accent); color: #fff; }
+.view-btn:not(.active):hover { background: var(--bg); color: var(--text); }
 
-/* empty state */
-.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
-.empty-state .empty-icon{font-size:36px;margin-bottom:12px;opacity:0.3}
-.empty-state p{font-size:14px;margin-bottom:16px}
+/* TABLE */
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rl); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 9px 14px; text-align: left; font-weight: 500; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); border-bottom: 1px solid var(--border); background: var(--bg); white-space: nowrap; }
+tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--bg); }
+tbody td { padding: 11px 14px; font-size: 12px; vertical-align: middle; }
+.col-id { font-family: var(--mono); font-weight: 500; font-size: 12px; }
+.col-name { font-weight: 500; }
+.col-sgd { font-family: var(--mono); font-size: 11px; color: var(--text-2); }
+.col-sgd .sgd-main { font-weight: 500; color: var(--text); }
+.thumb-cell { width: 52px; }
+.thumb-sm { width: 44px; height: 44px; border-radius: 5px; object-fit: cover; object-position: center 30%; display: block; border: 1px solid var(--border); transform: scale(1.15); transition: transform .2s; }
+tbody tr:hover .thumb-sm { transform: scale(1.22); }
+.thumb-ph { width: 44px; height: 44px; border-radius: 5px; background: var(--bg); border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-3); }
+.family-pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; background: var(--bg); border: 1px solid var(--border); }
+.fdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.badge-draft { background: var(--yellow-bg); color: #8a6d00; border: 1px solid #e8d89a; }
+.badge-live { background: var(--green-bg); color: var(--green); border: 1px solid #a8d5bb; }
 
-/* ── TABLE ── */
-.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
-thead{background:#f9f8f5}
-th{padding:10px 12px;text-align:left;font-weight:600;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border);white-space:nowrap;letter-spacing:0.04em;text-transform:uppercase}
-td{padding:10px 12px;border-bottom:1px solid var(--border-soft);color:var(--text);vertical-align:top}
-tr:last-child td{border-bottom:none}
-tr.data-row{cursor:pointer;transition:background 0.1s}
-tr.data-row:hover td{background:#faf9f6}
-.sgd-main{font-weight:600}
-.sgd-extra{font-size:11px;color:var(--text-muted);margin-top:2px;line-height:1.6}
-.badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;letter-spacing:0.03em}
-.badge-live{background:var(--live-bg);color:var(--live-text)}
-.badge-draft{background:var(--draft-bg);color:var(--draft-text)}
-.color-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;border:1px solid rgba(0,0,0,0.08)}
-th:nth-child(1){width:13%}
-th:nth-child(2){width:6%}
-th:nth-child(3){width:13%}
-th:nth-child(4){width:9%}
-th:nth-child(5){width:9%}
-th:nth-child(6){width:14%}
-th:nth-child(7){width:9%}
-th:nth-child(8){width:13%}
-th:nth-child(9){width:8%}
-th:nth-child(10){width:6%}
+/* GALLERY */
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.g-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rl); overflow: hidden; cursor: pointer; transition: all .15s; }
+.g-card:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+.g-photo { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--bg); }
+.g-photo-ph { width: 100%; aspect-ratio: 1; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-3); font-size: 12px; }
+.g-photo-ph svg { opacity: .4; }
+.g-info { padding: 10px 12px 12px; border-top: 1px solid var(--border); }
+.g-id { font-family: var(--mono); font-size: 10px; color: var(--text-3); margin-bottom: 2px; }
+.g-name { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+.g-meta { display: flex; align-items: center; justify-content: space-between; }
 
-/* ── DETAIL VIEW ── */
-.detail-topbar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-.breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)}
-.breadcrumb span.sep{color:var(--border)}
-.breadcrumb span.current{color:var(--text);font-weight:600}
-.detail-actions{margin-left:auto;display:flex;gap:8px}
-.detail-layout{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
-.card+.card{margin-top:16px}
-.card-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-.field{display:flex;flex-direction:column;gap:5px}
-.field.full{grid-column:1/-1}
-.field label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em}
-.field input,.field select,.field textarea{font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);outline:none;width:100%;transition:border-color 0.12s}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:#999}
-.field textarea{min-height:68px;resize:vertical;line-height:1.5}
-.ref-panel{background:#faf9f6;border:1px solid var(--border-soft);border-radius:var(--radius-lg);padding:16px}
-.ref-panel .card-label{margin-bottom:10px}
-.ref-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border-soft)}
-.ref-row:last-child{border-bottom:none}
-.ref-key{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em}
-.ref-val{font-size:12px;font-weight:600;color:var(--text)}
+/* EMPTY */
+.empty-state { text-align: center; padding: 60px 20px; }
+.empty-state h3 { font-size: 15px; margin-bottom: 6px; }
+.empty-state p { font-size: 13px; color: var(--text-2); margin-bottom: 16px; }
+.no-results { text-align: center; padding: 40px; color: var(--text-3); font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--rl); }
 
-/* photo */
-.photo-zone{width:100%;aspect-ratio:3/4;border:1.5px dashed var(--border);border-radius:var(--radius-lg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;position:relative;overflow:hidden;background:#faf9f6;transition:border-color 0.15s,background 0.15s;margin-bottom:10px}
-.photo-zone:hover{border-color:#aaa;background:#f5f4f0}
-.photo-zone.has-img{border-color:transparent;background:transparent}
-.photo-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.photo-zone img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;position:absolute;inset:0}
-.photo-hint{display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;position:relative;z-index:1}
-.photo-zone.has-img .photo-hint{display:none}
-.photo-hint svg{opacity:0.3;width:28px;height:28px}
-.photo-hint span{font-size:11px;color:var(--text-muted);text-align:center;line-height:1.5}
-.photo-btns{display:flex;gap:6px;margin-bottom:14px}
-.divider{height:1px;background:var(--border-soft);margin:14px 0}
-.status-row{display:flex;align-items:center;justify-content:space-between}
-.status-row-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted)}
-.toggle-wrap{display:flex;align-items:center;gap:8px}
-.toggle{position:relative;width:36px;height:20px;cursor:pointer;flex-shrink:0}
-.toggle input{opacity:0;width:0;height:0;position:absolute}
-.slider{position:absolute;inset:0;background:#ccc;border-radius:20px;transition:background 0.2s}
-.slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
-.toggle input:checked~.slider{background:#2a6b2a}
-.toggle input:checked~.slider:before{transform:translateX(16px)}
+/* DETAIL */
+.detail-bar { display: flex; align-items: center; gap: 12px; padding: 12px 24px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 50px; z-index: 99; }
+.detail-title { font-size: 13px; font-weight: 500; }
+.detail-actions { margin-left: auto; display: flex; gap: 8px; }
+.detail-body { display: flex; gap: 20px; padding: 24px; max-width: 1200px; margin: 0 auto; }
+.detail-main { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+.detail-side { width: 260px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rl); padding: 18px; }
+.card-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-group { display: flex; flex-direction: column; gap: 4px; }
+.field-group.full { grid-column: 1 / -1; }
+.field-label { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
+.field-input { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--r); font-family: var(--sans); font-size: 13px; color: var(--text); background: var(--surface); outline: none; }
+.field-input:focus { border-color: var(--border-strong); }
+select.field-input { appearance: none; cursor: pointer; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239e9b94'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+.ref-table { width: 100%; border-collapse: collapse; }
+.ref-table tr { border-bottom: 1px solid var(--border); }
+.ref-table tr:last-child { border-bottom: none; }
+.ref-table td { padding: 8px 0; font-size: 12px; }
+.ref-table td:first-child { color: var(--text-2); width: 45%; }
+.ref-table td:last-child { font-weight: 500; text-align: right; font-family: var(--mono); font-size: 11px; }
 
-/* import drop zone */
-.import-zone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:32px;text-align:center;cursor:pointer;transition:border-color 0.15s,background 0.15s;position:relative}
-.import-zone:hover,.import-zone.drag-over{border-color:#888;background:#f5f4f0}
-.import-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.import-zone p{font-size:13px;color:var(--text-muted);margin-top:8px}
-.import-zone strong{font-size:14px;display:block;margin-bottom:4px}
+/* PHOTO */
+.photo-display { width: 100%; aspect-ratio: 4/5; border-radius: var(--r); background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.photo-display img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-display-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-3); font-size: 12px; width: 100%; height: 100%; }
+.photo-display-empty svg { opacity: .35; }
+.photo-expand-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.45); border: none; border-radius: 5px; color: #fff; width: 32px; height: 32px; display: none; align-items: center; justify-content: center; cursor: pointer; transition: background .15s; }
+.photo-expand-btn:hover { background: rgba(0,0,0,.65); }
+.photo-display.has-photo .photo-expand-btn { display: flex; }
+.photo-uploader { border: 1.5px dashed var(--border); border-radius: var(--r); padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all .15s; background: var(--surface); }
+.photo-uploader:hover { border-color: var(--border-strong); background: var(--bg); }
+.photo-uploader input { display: none; }
+.photo-uploader span { font-size: 12px; color: var(--text-2); font-weight: 500; }
+.photo-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; }
 
-/* toast */
-.toast{position:fixed;bottom:24px;right:24px;background:#111;color:#fff;padding:10px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;opacity:0;transform:translateY(8px);transition:opacity 0.2s,transform 0.2s;pointer-events:none;z-index:999}
-.toast.show{opacity:1;transform:translateY(0)}
+/* STATUS */
+.status-row { display: flex; align-items: center; justify-content: space-between; }
+.toggle { position: relative; width: 36px; height: 20px; background: var(--border); border-radius: 10px; cursor: pointer; transition: background .2s; border: none; flex-shrink: 0; }
+.toggle.on { background: var(--green); }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.toggle.on::after { left: 18px; }
+
+/* LIGHTBOX */
+#lightbox { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.92); align-items: center; justify-content: center; cursor: zoom-out; }
+#lightbox.open { display: flex; }
+#lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 4px; box-shadow: 0 24px 80px rgba(0,0,0,.5); cursor: default; }
+#lightbox-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,.12); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: background .15s; font-size: 20px; }
+#lightbox-close:hover { background: rgba(255,255,255,.22); }
+#lightbox-label { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,.6); font-size: 12px; font-family: var(--mono); pointer-events: none; white-space: nowrap; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: #fff; padding: 10px 16px; border-radius: var(--r); font-size: 13px; z-index: 9999; opacity: 0; transform: translateY(8px); transition: all .25s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* MODAL */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; align-items: center; justify-content: center; }
+.overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--rl); padding: 28px; width: 440px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,.15); }
+.modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: var(--text-2); margin-bottom: 16px; line-height: 1.5; }
+.drop-zone { border: 1.5px dashed var(--border); border-radius: var(--r); padding: 32px; text-align: center; cursor: pointer; transition: all .15s; margin-bottom: 16px; }
+.drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: var(--bg); }
+.drop-zone p { color: var(--text-2); font-size: 13px; margin: 0; }
+.drop-zone input { display: none; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* LOADING OVERLAY */
+#loading-overlay { display: none; position: fixed; inset: 0; background: rgba(245,244,240,.85); z-index: 500; align-items: center; justify-content: center; flex-direction: column; gap: 12px; font-size: 13px; color: var(--text-2); }
+#loading-overlay.show { display: flex; }
+.spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-logo">BTSA</div>
-  <div class="header-divider"></div>
-  <div class="header-title">Color Archive CMS</div>
-  <div class="header-actions"><span id="syncStatus" style="font-size:11px;color:#aaa;margin-right:4px"></span><button class="btn btn-sm" id="syncBtn" onclick="autoFetchFromSharePoint()">↻ Sync from SharePoint</button>
-    <button class="btn btn-sm" onclick="showImport()">
-      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="nav-left">
+    <button id="back-btn" onclick="showPage('list')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 3L5 8l5 5"/></svg>
+      All colors
+    </button>
+    <span class="logo">BTSA</span>
+    <span class="breadcrumb">Color Archive CMS</span>
+  </div>
+  <div class="nav-right">
+    <span class="sync-time" id="sync-time"></span>
+    <button class="btn btn-ghost" onclick="openImport()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v9M4 7l4 4 4-4M2 13h12"/></svg>
       Import Excel / CSV
     </button>
-    <button class="btn btn-sm btn-primary" onclick="newEntry()">+ Add color</button>
+    <button class="btn btn-primary" onclick="addColor()">+ Add color</button>
   </div>
-</div>
+</nav>
 
-<!-- LIST VIEW -->
-<div class="view active" id="view-list">
-  <div class="list-topbar">
-    <h1>Color archive</h1>
-    <span class="list-count" id="listCount">0 entries</span>
-  </div>
-  <div class="filters">
-    <input type="text" id="search" placeholder="Search name, ID, customer, SGD#..." oninput="renderList()">
-    <select id="filterFamily" onchange="renderList()">
-      <option value="">All families</option>
-    </select>
-    <select id="filterVendor" onchange="renderList()">
-      <option value="">All vendors</option>
-    </select>
-    <select id="filterStatus" onchange="renderList()">
-      <option value="">All statuses</option>
-      <option value="Live">Live</option>
-      <option value="Draft">Draft</option>
-    </select>
-  </div>
-  <div id="listBody"></div>
-</div>
-
-<!-- DETAIL VIEW -->
-<div class="view" id="view-detail">
-  <div class="detail-topbar">
-    <div class="breadcrumb">
-      <button class="btn btn-ghost btn-sm" onclick="showList()">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        All colors
-      </button>
-      <span class="sep">›</span>
-      <span class="current" id="detailBreadcrumb">—</span>
+<!-- LIST PAGE -->
+<div id="page-list" class="page active">
+  <div class="main">
+    <div class="page-header">
+      <div>
+        <span class="page-title">Color archive</span>
+        <span class="entry-count" id="entry-count"></span>
+      </div>
     </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M11 11l3 3"/></svg>
+        <input type="text" class="search-input" id="search-input" placeholder="Search name, ID, customer, SGD#…" oninput="renderAll()">
+      </div>
+      <select class="filter" id="filter-family" onchange="renderAll()"><option value="">All families</option></select>
+      <select class="filter" id="filter-vendor" onchange="renderAll()"><option value="">All vendors</option></select>
+      <select class="filter" id="filter-status" onchange="renderAll()">
+        <option value="">All statuses</option>
+        <option value="Draft">Draft</option>
+        <option value="Live">Live</option>
+      </select>
+      <div class="spacer"></div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="btn-list" onclick="setView('list')" title="List view">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+        </button>
+        <button class="view-btn" id="btn-gallery" onclick="setView('gallery')" title="Gallery view">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="view-list">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="thumb-cell"></th>
+              <th>Color ID</th><th>ID</th><th>Color Name</th><th>Family</th>
+              <th>Style #</th><th>SGD #</th><th>Manager</th><th>Customer</th><th>Vendor</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="list-tbody"></tbody>
+        </table>
+      </div>
+      <div id="list-empty" class="no-results" style="display:none">No entries match your filters.</div>
+    </div>
+    <div id="view-gallery" style="display:none">
+      <div class="gallery-grid" id="gallery-grid"></div>
+      <div id="gallery-empty" class="no-results" style="display:none">No entries match.</div>
+    </div>
+    <div id="empty-state" class="empty-state" style="display:none">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c8c5ba" stroke-width="1.5" style="margin:0 auto 12px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <h3>No colors yet</h3>
+      <p>Import your Excel file or add a color manually.</p>
+      <button class="btn btn-primary" onclick="openImport()">Import Excel / CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PAGE -->
+<div id="page-detail" class="page">
+  <div class="detail-bar">
+    <span class="detail-title" id="detail-title"></span>
     <div class="detail-actions">
-      <button class="btn btn-sm btn-danger" onclick="deleteEntry()">Delete</button>
-      <button class="btn btn-sm" onclick="saveEntry('Draft')">Save draft</button>
-      <button class="btn btn-sm btn-publish" onclick="saveEntry('Live')">Publish</button>
+      <button class="btn btn-danger" onclick="deleteEntry()">Delete</button>
+      <button class="btn btn-ghost" onclick="saveEntry(false)">Save draft</button>
+      <button class="btn btn-publish" onclick="saveEntry(true)">Publish</button>
     </div>
   </div>
-
-  <div class="detail-layout">
-    <div>
+  <div class="detail-body">
+    <div class="detail-main">
       <div class="card">
         <div class="card-label">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
           Live page fields
         </div>
-        <div class="field-grid">
-          <div class="field">
-            <label>Color name</label>
-            <input type="text" id="f-colorName" placeholder="e.g. Black Beauty">
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Color Name</label>
+            <input class="field-input" id="d-name" type="text">
           </div>
-          <div class="field">
-            <label>Color family</label>
-            <select id="f-colorFamily">
-              <option value="">Select...</option>
-              <option>Black</option><option>Blue</option><option>Brown</option>
-              <option>Green</option><option>Grey</option><option>Pink</option>
-              <option>Purple</option><option>Red</option><option>White</option>
-              <option>Yellow</option><option>TIE DYE</option>
+          <div class="field-group">
+            <label class="field-label">Color Family</label>
+            <select class="field-input" id="d-family">
+              <option>Black</option><option>Blue</option><option>Brown</option><option>Green</option>
+              <option>Grey</option><option>Orange</option><option>Pink</option><option>Purple</option>
+              <option>Red</option><option>White</option><option>Yellow</option>
             </select>
           </div>
-        </div>
-        <div class="field-grid">
-          <div class="field full">
-            <label>Process</label>
-            <input type="text" id="f-process" placeholder="e.g. Reactive + Enzyme & Softener">
+          <div class="field-group full">
+            <label class="field-label">Process</label>
+            <input class="field-input" id="d-process" type="text" placeholder="e.g. Pigment Dye + Enzyme & Softener">
+          </div>
+          <div class="field-group full">
+            <label class="field-label">Displayed On</label>
+            <input class="field-input" id="d-displayed" type="text" placeholder="e.g. Hoodies, T-Shirts, Fleece…">
           </div>
         </div>
-        <div class="field">
-          <label>Displayed on</label>
-          <input type="text" id="f-displayedOn" placeholder="e.g. Hoodies, T-Shirts, Fleece...">
-        </div>
       </div>
-
-      <div class="ref-panel card" style="margin-top:14px">
-        <div class="card-label" style="color:#aaa">
-          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      <div class="card">
+        <div class="card-label" style="color:#b0a090">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="2" width="10" height="12" rx="1"/><path d="M6 6h4M6 9h4M6 12h2"/></svg>
           Internal reference — not shown on live page
         </div>
-        <div class="ref-row"><span class="ref-key">Style #</span><span class="ref-val" id="ref-style">—</span></div>
-        <div class="ref-row"><span class="ref-key">Fabric</span><span class="ref-val" id="ref-fabric">—</span></div>
-        <div class="ref-row"><span class="ref-key">SGD #</span><span class="ref-val" id="ref-sgd">—</span></div>
-        <div class="ref-row"><span class="ref-key">Vendor</span><span class="ref-val" id="ref-vendor">—</span></div>
-        <div class="ref-row" style="border-bottom:none"><span class="ref-key">Customer</span><span class="ref-val" id="ref-customer">—</span></div>
+        <table class="ref-table">
+          <tr><td>Style #</td><td id="d-style"></td></tr>
+          <tr><td>Fabric</td><td id="d-fabric"></td></tr>
+          <tr><td>SGD #</td><td id="d-sgd"></td></tr>
+          <tr><td>Vendor</td><td id="d-vendor"></td></tr>
+          <tr><td>Customer</td><td id="d-customer"></td></tr>
+        </table>
       </div>
     </div>
-
-    <div>
-      <div class="card">
-        <div class="card-label">Garment photo</div>
-        <div class="photo-zone" id="photoZone"
-          ondragover="event.preventDefault();this.classList.add('drag-over')"
-          ondragleave="this.classList.remove('drag-over')"
-          ondrop="handleDrop(event)">
-          <input type="file" accept="image/*" onchange="loadPhoto(this)" id="photoInput">
-          <div class="photo-hint">
-            <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            <span>Click or drag to<br>upload garment photo</span>
+    <div class="detail-side">
+      <div class="card" style="padding:16px">
+        <div class="photo-label">Garment Photo</div>
+        <div class="photo-display" id="photo-display">
+          <div class="photo-display-empty" id="photo-display-empty">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span>No photo yet</span>
           </div>
-        </div>
-        <div class="photo-btns" id="photoBtns" style="display:none">
-          <button class="btn btn-sm" style="flex:1;justify-content:center" onclick="document.getElementById('photoInput').click()">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            Swap
-          </button>
-          <button class="btn btn-sm btn-danger" style="flex:1;justify-content:center" onclick="clearPhoto()">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-            Remove
+          <button class="photo-expand-btn" id="photo-expand-btn" onclick="openLightbox(event)" title="View full size">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
           </button>
         </div>
-        <div class="divider"></div>
+        <div class="photo-uploader" onclick="document.getElementById('photo-input').click()">
+          <input type="file" id="photo-input" accept="image/*" onchange="handlePhoto(event)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          <span id="upload-label">Upload photo</span>
+        </div>
+      </div>
+      <div class="card">
         <div class="status-row">
-          <span class="status-row-label">Status</span>
-          <div class="toggle-wrap">
-            <span class="badge" id="statusBadge">Draft</span>
-            <label class="toggle">
-              <input type="checkbox" id="statusToggle" onchange="onToggleStatus()">
-              <span class="slider"></span>
-            </label>
+          <span style="font-size:12px;font-weight:500">Status</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="status-label" style="font-size:12px;color:var(--text-2)">Draft</span>
+            <button class="toggle" id="status-toggle" onclick="toggleStatus()"></button>
           </div>
         </div>
       </div>
@@ -291,420 +346,561 @@ th:nth-child(10){width:6%}
   </div>
 </div>
 
-<!-- IMPORT VIEW -->
-<div class="view" id="view-import">
-  <div style="max-width:560px;margin:0 auto;padding-top:20px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-      <button class="btn btn-ghost btn-sm" onclick="showList()">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Back
-      </button>
-      <h1 style="font-size:17px;font-weight:600">Import Excel / CSV</h1>
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation()">
+  <div id="lightbox-label"></div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="overlay" id="import-overlay">
+  <div class="modal">
+    <h3>Import Excel / CSV</h3>
+    <p>Upload your Color Archive Excel (.xlsx, .xls) or CSV. Matching Color IDs will be updated; new ones added. Photos and statuses you've set are preserved.</p>
+    <div class="drop-zone" id="drop-zone"
+      ondragover="event.preventDefault();this.classList.add('dragover')"
+      ondragleave="this.classList.remove('dragover')"
+      ondrop="handleDrop(event)"
+      onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)">
+      <p>Drop file here or <strong>click to browse</strong></p>
+      <p style="font-size:11px;margin-top:6px;color:var(--text-3)">.xlsx · .xls · .csv</p>
     </div>
-    <div class="card">
-      <div class="card-label">Upload your Color Archive file</div>
-      <div class="import-zone" id="importZone"
-        ondragover="event.preventDefault();document.getElementById('importZone').classList.add('drag-over')"
-        ondragleave="document.getElementById('importZone').classList.remove('drag-over')"
-        ondrop="handleImportDrop(event)">
-        <input type="file" accept=".xlsx,.xls,.csv" onchange="handleImportFile(this)">
-        <svg width="32" height="32" fill="none" stroke="#aaa" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-        <strong>Drop your file here</strong>
-        <p>Supports .xlsx, .xls, and .csv — or click to browse</p>
-      </div>
-      <div id="importPreview" style="margin-top:16px"></div>
-    </div>
-    <div class="card" style="margin-top:14px;background:#faf9f6">
-      <div class="card-label">Expected columns</div>
-      <p style="font-size:12px;color:var(--text-muted);line-height:1.8">
-        Color ID · Color Family · ID · Color Name · Process · STYLE# · Fabric · SGD# · MANAGER · CUSTOMER · OrderRef · Color Reference · SAMPLE · Sample Type · VENDOR · Rack # · URL · Image Link
-      </p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeImport()">Cancel</button>
     </div>
   </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <span id="loading-msg">Loading…</span>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const STORAGE_KEY = 'btsa_color_archive_v1';
-let entries = [];
-let currentId = null;
+// ── SUPABASE CONFIG ──
+const SUPA_URL = 'https://djaovgvcabjadljnguzi.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqYW92Z3ZjYWJqYWRsam5ndXppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNDM0OTYsImV4cCI6MjA5NTkxOTQ5Nn0.Cj9FO-V0EEGHSBMz-JyDJu05HjcMtEA6Rr6vbTg4Cig';
 
-const colorMap = {
-  Purple:'#9B8FE0',Black:'#444',White:'#ddd',Green:'#6BAF5A',Pink:'#E87DA8',
-  Yellow:'#F5C842',Blue:'#5A9FE0',Red:'#E05A5A',Brown:'#A07850',Grey:'#999',
-  'TIE DYE':'#C06090'
+async function sbFetch(path, options = {}) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    ...options,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || '',
+      ...options.headers
+    }
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ── STATE ──
+let colors = [];
+let currentId = null; // index into colors[]
+let currentView = 'list';
+
+const FC = {
+  Black:'#1a1916', Blue:'#2563eb', Brown:'#7c4b1e', Green:'#16a34a',
+  Grey:'#71717a', Orange:'#ea580c', Pink:'#db2777', Purple:'#7c3aed',
+  Red:'#dc2626', White:'#d1d5db', Yellow:'#ca8a04'
 };
 
-function load(){
-  try{ const d=localStorage.getItem(STORAGE_KEY); if(d) entries=JSON.parse(d); }catch(e){}
-}
-function save(){
-  try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(entries)); }catch(e){}
-}
-function toast(msg){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),2200);
+function normVendor(v) {
+  if (!v) return v;
+  const c = v.trim().toUpperCase().replace(/[\s'\u2018\u2019`]/g, '');
+  if (/^5A/.test(c)) return "5 A'S";
+  return v.trim();
 }
 
-function showList(){ setView('list'); renderList(); }
-function showImport(){ setView('import'); }
-function setView(name){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-'+name).classList.add('active');
-}
-
-function uid(){ return 'e_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
-
-/* ── PARSE CSV/XLSX ── */
-function parseCSVText(text){
-  const lines=text.trim().split(/\r?\n/);
-  const headers=parseCSVLine(lines[0]);
-  return lines.slice(1).map(l=>{
-    const vals=parseCSVLine(l);
-    const obj={};
-    headers.forEach((h,i)=>obj[h.trim()]=vals[i]?vals[i].trim():'');
-    return obj;
-  }).filter(r=>r['Color ID']||r['Color Name']);
-}
-function parseCSVLine(line){
-  const res=[];let cur='',inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(c==='"'){inQ=!inQ}
-    else if(c===','&&!inQ){res.push(cur);cur=''}
-    else{cur+=c}
-  }
-  res.push(cur);
-  return res;
-}
-
-function rowsToEntries(rows){
-  const map={};
-  rows.forEach(r=>{
-    const key=(r['Color ID']||'').trim();
-    if(!key) return;
-    if(!map[key]){
-      map[key]={
-        _id: uid(),
-        colorId: key,
-        colorFamily: r['Color Family']||'',
-        numericId: r['ID']||'',
-        colorName: r['Color Name']||'',
-        process: r['Process']||'',
-        styleNum: r['STYLE#']||'',
-        fabric: r['Fabric']||'',
-        sgds: [],
-        manager: r['MANAGER']||'',
-        customer: r['CUSTOMER']||'',
-        vendor: r['VENDOR']||'',
-        rackNum: r['Rack #']||'',
-        colorRef: r['Color Reference']||'',
-        displayedOn: '',
-        photo: null,
-        status: 'Draft'
-      };
-    }
-    const sgd=(r['SGD#']||'').trim();
-    if(sgd && !map[key].sgds.includes(sgd)) map[key].sgds.push(sgd);
-  });
-  return Object.values(map);
-}
-
-function handleImportFile(input){
-  const file=input.files[0]; if(!file) return;
-  importFile(file);
-}
-function handleImportDrop(e){
-  e.preventDefault();
-  document.getElementById('importZone').classList.remove('drag-over');
-  const file=e.dataTransfer.files[0]; if(!file) return;
-  importFile(file);
-}
-function importFile(file){
-  const ext=file.name.split('.').pop().toLowerCase();
-  if(ext==='csv'){
-    const r=new FileReader();
-    r.onload=e=>processRows(parseCSVText(e.target.result),file.name);
-    r.readAsText(file);
-  } else {
-    const r=new FileReader();
-    r.onload=e=>{
-      const wb=XLSX.read(e.target.result,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-      processRows(rows,file.name);
-    };
-    r.readAsArrayBuffer(file);
-  }
-}
-function processRows(rows,fname){
-  const newEntries=rowsToEntries(rows);
-  // merge: preserve existing edits (photo, displayedOn, status) by colorId
-  const existingMap={};
-  entries.forEach(e=>existingMap[e.colorId]=e);
-  newEntries.forEach(ne=>{
-    const ex=existingMap[ne.colorId];
-    if(ex){ ne._id=ex._id; ne.displayedOn=ex.displayedOn; ne.photo=ex.photo; ne.status=ex.status; }
-  });
-  entries=newEntries;
-  save();
-  populateFilters();
-  const preview=document.getElementById('importPreview');
-  preview.innerHTML=`<div style="background:#e8f4e8;border:1px solid #b8ddb8;border-radius:6px;padding:12px 16px;font-size:13px;color:#2a6b2a">
-    <strong>✓ Imported ${entries.length} color entries</strong> from ${fname}
-    <div style="margin-top:6px;font-size:12px;color:#3a7a3a">Existing edits (photos, displayed on, status) were preserved.</div>
-  </div>`;
-  toast(`Imported ${entries.length} entries`);
-  setTimeout(()=>showList(),1400);
-}
-
-/* ── LIST ── */
-function populateFilters(){
-  const families=[...new Set(entries.map(e=>e.colorFamily).filter(Boolean))].sort();
-  const vendors=[...new Set(entries.map(e=>e.vendor).filter(Boolean))].sort();
-  const fSel=document.getElementById('filterFamily');
-  const vSel=document.getElementById('filterVendor');
-  const fVal=fSel.value, vVal=vSel.value;
-  fSel.innerHTML='<option value="">All families</option>'+families.map(f=>`<option value="${f}"${f===fVal?' selected':''}>${f}</option>`).join('');
-  vSel.innerHTML='<option value="">All vendors</option>'+vendors.map(v=>`<option value="${v}"${v===vVal?' selected':''}>${v}</option>`).join('');
-}
-function renderList(){
-  const q=(document.getElementById('search').value||'').toLowerCase();
-  const fam=document.getElementById('filterFamily').value;
-  const ven=document.getElementById('filterVendor').value;
-  const sta=document.getElementById('filterStatus').value;
-  const filtered=entries.filter(e=>{
-    const matchQ=!q||[e.colorId,e.colorName,e.customer,e.manager,...e.sgds].join(' ').toLowerCase().includes(q);
-    return matchQ&&(!fam||e.colorFamily===fam)&&(!ven||e.vendor===ven)&&(!sta||e.status===sta);
-  });
-  document.getElementById('listCount').textContent=`${filtered.length} entr${filtered.length===1?'y':'ies'}`;
-  const body=document.getElementById('listBody');
-  if(entries.length===0){
-    body.innerHTML=`<div class="empty-state">
-      <div class="empty-icon">📂</div>
-      <p>No colors yet. Import your Excel file to get started.</p>
-      <button class="btn btn-primary" onclick="showImport()">Import Excel / CSV</button>
-    </div>`;
-    return;
-  }
-  if(filtered.length===0){
-    body.innerHTML=`<div class="empty-state"><p>No entries match your filters.</p></div>`;
-    return;
-  }
-  body.innerHTML=`<div class="table-wrap"><table>
-    <thead><tr>
-      <th>Color ID</th><th>ID</th><th>Color name</th><th>Family</th>
-      <th>Style #</th><th>SGD #</th><th>Manager</th><th>Customer</th>
-      <th>Vendor</th><th>Status</th>
-    </tr></thead>
-    <tbody>${filtered.map(e=>{
-      const dot=colorMap[e.colorFamily]||'#ccc';
-      const primary=e.sgds[0]||'—';
-      const more=e.sgds.slice(1);
-      return `<tr class="data-row" onclick="openEntry('${e._id}')">
-        <td style="font-weight:600">${e.colorId||'—'}</td>
-        <td>${e.numericId||'—'}</td>
-        <td>${e.colorName||'—'}</td>
-        <td><span class="color-dot" style="background:${dot}"></span>${e.colorFamily||'—'}</td>
-        <td>${e.styleNum||'—'}</td>
-        <td><span class="sgd-main">${primary}</span>${more.length?`<div class="sgd-extra">${more.join(' · ')}</div>`:''}</td>
-        <td>${e.manager||'—'}</td>
-        <td style="font-size:11px">${e.customer||'—'}</td>
-        <td>${e.vendor||'—'}</td>
-        <td><span class="badge ${e.status==='Live'?'badge-live':'badge-draft'}">${e.status}</span></td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table></div>`;
-}
-
-/* ── DETAIL ── */
-function openEntry(id){
-  currentId=id;
-  const e=entries.find(x=>x._id===id);
-  if(!e) return;
-  document.getElementById('detailBreadcrumb').textContent=`${e.colorId} — ${e.colorName||'Untitled'}`;
-  document.getElementById('f-colorName').value=e.colorName||'';
-  document.getElementById('f-colorFamily').value=e.colorFamily||'';
-  document.getElementById('f-process').value=e.process||'';
-  document.getElementById('f-displayedOn').value=e.displayedOn||'';
-  document.getElementById('ref-style').textContent=e.styleNum||'—';
-  document.getElementById('ref-fabric').textContent=e.fabric||'—';
-  document.getElementById('ref-sgd').textContent=e.sgds.join(', ')||'—';
-  document.getElementById('ref-vendor').textContent=e.vendor||'—';
-  document.getElementById('ref-customer').textContent=e.customer||'—';
-  const zone=document.getElementById('photoZone');
-  const existing=zone.querySelector('img');
-  if(existing) existing.remove();
-  zone.classList.remove('has-img');
-  document.getElementById('photoBtns').style.display='none';
-  if(e.photo){
-    const img=document.createElement('img');
-    img.src=e.photo;
-    zone.appendChild(img);
-    zone.classList.add('has-img');
-    document.getElementById('photoBtns').style.display='flex';
-  }
-  const isLive=e.status==='Live';
-  document.getElementById('statusToggle').checked=isLive;
-  const badge=document.getElementById('statusBadge');
-  badge.textContent=e.status;
-  badge.className='badge '+(isLive?'badge-live':'badge-draft');
-  setView('detail');
-}
-
-function newEntry(){
-  const e={
-    _id:uid(), colorId:'New-'+Date.now(), colorFamily:'', numericId:'',
-    colorName:'', process:'', styleNum:'', fabric:'', sgds:[],
-    manager:'', customer:'', vendor:'', rackNum:'', colorRef:'',
-    displayedOn:'', photo:null, status:'Draft'
+// ── DB → LOCAL mapping ──
+function dbToLocal(row) {
+  return {
+    dbId:        row.id,
+    colorId:     row.color_id,
+    id:          row.numeric_id,
+    colorName:   row.color_name,
+    colorFamily: row.color_family,
+    style:       row.style,
+    fabric:      row.fabric,
+    sgd:         row.sgd,
+    manager:     row.manager,
+    customer:    row.customer,
+    vendor:      row.vendor,
+    process:     row.process,
+    displayedOn: row.displayed_on,
+    rack:        row.rack,
+    reference:   row.reference,
+    sampletype:  row.sample_type,
+    status:      row.status || 'Draft',
+    photo:       row.photo_url || null,
   };
-  entries.unshift(e);
-  save();
-  openEntry(e._id);
 }
 
-function saveEntry(status){
-  const e=entries.find(x=>x._id===currentId);
-  if(!e) return;
-  e.colorName=document.getElementById('f-colorName').value;
-  e.colorFamily=document.getElementById('f-colorFamily').value;
-  e.process=document.getElementById('f-process').value;
-  e.displayedOn=document.getElementById('f-displayedOn').value;
-  if(status) e.status=status;
-  const zone=document.getElementById('photoZone');
-  const img=zone.querySelector('img');
-  e.photo=img?img.src:null;
-  save();
-  const badge=document.getElementById('statusBadge');
-  badge.textContent=e.status;
-  badge.className='badge '+(e.status==='Live'?'badge-live':'badge-draft');
-  document.getElementById('statusToggle').checked=e.status==='Live';
-  document.getElementById('detailBreadcrumb').textContent=`${e.colorId} — ${e.colorName||'Untitled'}`;
-  toast(e.status==='Live'?'Published ✓':'Saved as draft');
-}
-
-function deleteEntry(){
-  if(!confirm('Delete this entry? This cannot be undone.')) return;
-  entries=entries.filter(x=>x._id!==currentId);
-  save();
-  toast('Entry deleted');
-  showList();
-}
-
-function onToggleStatus(){
-  const on=document.getElementById('statusToggle').checked;
-  const badge=document.getElementById('statusBadge');
-  badge.textContent=on?'Live':'Draft';
-  badge.className='badge '+(on?'badge-live':'badge-draft');
-}
-
-/* ── PHOTO ── */
-function loadPhoto(input){
-  const file=input.files[0]; if(!file) return;
-  const r=new FileReader();
-  r.onload=e=>{
-    const zone=document.getElementById('photoZone');
-    let img=zone.querySelector('img');
-    if(!img){img=document.createElement('img');zone.appendChild(img)}
-    img.src=e.target.result;
-    zone.classList.add('has-img');
-    document.getElementById('photoBtns').style.display='flex';
+function localToDb(c) {
+  return {
+    color_id:     c.colorId,
+    numeric_id:   c.id,
+    color_name:   c.colorName,
+    color_family: c.colorFamily,
+    style:        c.style,
+    fabric:       c.fabric,
+    sgd:          c.sgd,
+    manager:      c.manager,
+    customer:     c.customer,
+    vendor:       c.vendor,
+    process:      c.process,
+    displayed_on: c.displayedOn,
+    rack:         c.rack,
+    reference:    c.reference,
+    sample_type:  c.sampletype,
+    status:       c.status || 'Draft',
+    photo_url:    c.photo || null,
+    updated_at:   new Date().toISOString(),
   };
-  r.readAsDataURL(file);
-}
-function handleDrop(e){
-  e.preventDefault();
-  const zone=document.getElementById('photoZone');
-  zone.classList.remove('drag-over');
-  const file=e.dataTransfer.files[0];
-  if(!file||!file.type.startsWith('image/')) return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    let img=zone.querySelector('img');
-    if(!img){img=document.createElement('img');zone.appendChild(img)}
-    img.src=ev.target.result;
-    zone.classList.add('has-img');
-    document.getElementById('photoBtns').style.display='flex';
-  };
-  r.readAsDataURL(file);
-}
-function clearPhoto(){
-  const zone=document.getElementById('photoZone');
-  const img=zone.querySelector('img'); if(img) img.remove();
-  zone.classList.remove('has-img');
-  document.getElementById('photoBtns').style.display='none';
 }
 
-// GitHub raw URL — updated daily by GitHub Action
-const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/btsa-us/color_archive/main/color-archive.csv';
-const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1rAfQZPFTfABk9uSmvqfMNDKIt_wyUDrKHqPRmzS4N8M/export?format=csv';
-
-async function autoFetchFromSharePoint(){
-  const syncBtn = document.getElementById('syncBtn');
-  if(syncBtn){ syncBtn.textContent='Syncing...'; syncBtn.disabled=true; }
-
-  let text = null;
-  // Try Google Sheets first, then GitHub as fallback
-  const sources = [
-    GOOGLE_SHEET_CSV_URL + '&t=' + Date.now(),
-    GITHUB_CSV_URL + '?t=' + Date.now()
-  ];
-  for(const url of sources){
-    try{
-      const res = await fetch(url);
-      if(res.ok){
-        const t = await res.text();
-        if(t && t.length > 50){ text = t; break; }
-      }
-    } catch(e){ console.error('Fetch error:', e); }
-  }
-
-  if(!text){
-    toast('Could not sync — check Google Sheet sharing settings');
-    if(syncBtn){ syncBtn.textContent='Sync from SharePoint'; syncBtn.disabled=false; }
-    return;
-  }
-
-  try{
-    // Try parsing as Excel binary first, fallback to CSV text
-    let rows = [];
-    try {
-      const ab = new Uint8Array(text.split('').map(c=>c.charCodeAt(0))).buffer;
-      const wb = XLSX.read(ab, {type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      rows = XLSX.utils.sheet_to_json(ws, {defval:''});
-    } catch(xlsxErr) {
-      rows = parseCSVText(text);
-    }
-    if(rows.length===0) throw new Error('No data');
-    const newEntries = rowsToEntries(rows);
-    const existingMap={};
-    entries.forEach(e=>existingMap[e.colorId]=e);
-    newEntries.forEach(ne=>{
-      const ex=existingMap[ne.colorId];
-      if(ex){ ne._id=ex._id; ne.displayedOn=ex.displayedOn; ne.photo=ex.photo; ne.status=ex.status; }
-    });
-    entries=newEntries;
-    save();
-    populateFilters();
-    renderList();
-    const syncStatus = document.getElementById('syncStatus');
-    if(syncStatus) syncStatus.textContent = 'Synced '+new Date().toLocaleTimeString();
-    toast('Synced from SharePoint ✓');
-  } catch(err){
-    toast('Sync failed — check file format');
+// ── LOAD FROM SUPABASE ──
+async function loadFromDB() {
+  showLoading('Loading colors…');
+  try {
+    const rows = await sbFetch('colors?select=*&order=color_id.asc');
+    colors = (rows || []).map(dbToLocal);
+    buildFilters();
+    renderAll();
+    updateSyncTime();
+  } catch(e) {
+    console.error(e);
+    toast('Could not connect to database');
   } finally {
-    if(syncBtn){ syncBtn.textContent='Sync from SharePoint'; syncBtn.disabled=false; }
+    hideLoading();
   }
 }
 
-load();
-populateFilters();
-renderList();
-autoFetchFromSharePoint();
+// ── SAVE ONE ENTRY TO SUPABASE ──
+async function saveEntryToDB(c) {
+  const payload = localToDb(c);
+  if (c.dbId) {
+    // update existing
+    await sbFetch('colors?id=eq.' + c.dbId, {
+      method: 'PATCH',
+      prefer: 'return=representation',
+      body: JSON.stringify(payload)
+    });
+  } else {
+    // insert new
+    const result = await sbFetch('colors', {
+      method: 'POST',
+      prefer: 'return=representation',
+      body: JSON.stringify(payload)
+    });
+    if (result && result[0]) c.dbId = result[0].id;
+  }
+}
+
+// ── DELETE FROM SUPABASE ──
+async function deleteEntryFromDB(c) {
+  if (!c.dbId) return;
+  await sbFetch('colors?id=eq.' + c.dbId, { method: 'DELETE' });
+}
+
+// ── UPSERT BATCH (import) ──
+async function upsertBatch(rows) {
+  await sbFetch('colors', {
+    method: 'POST',
+    prefer: 'return=representation,resolution=merge-duplicates',
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(rows)
+  });
+}
+
+// ── PAGE SWITCHING ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('back-btn').style.display = name === 'detail' ? 'inline-flex' : 'none';
+  if (name === 'list') { currentId = null; renderAll(); }
+  window.scrollTo(0, 0);
+}
+
+// ── INIT ──
+loadFromDB().then(() => showPage('list'));
+
+function updateSyncTime() {
+  const now = new Date();
+  document.getElementById('sync-time').textContent =
+    'Synced ' + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+// ── VIEW TOGGLE ──
+function setView(v) {
+  currentView = v;
+  document.getElementById('btn-list').classList.toggle('active', v === 'list');
+  document.getElementById('btn-gallery').classList.toggle('active', v === 'gallery');
+  renderAll();
+}
+
+// ── FILTERS ──
+function buildFilters() {
+  const ff = document.getElementById('filter-family');
+  const fv = document.getElementById('filter-vendor');
+  const pf = ff.value, pv = fv.value;
+  const families = [...new Set(colors.map(c => c.colorFamily).filter(Boolean))].sort();
+  const vendors  = [...new Set(colors.map(c => c.vendor).filter(Boolean))].sort();
+  ff.innerHTML = '<option value="">All families</option>' + families.map(f => `<option${f===pf?' selected':''}>${f}</option>`).join('');
+  fv.innerHTML = '<option value="">All vendors</option>'  + vendors.map(v  => `<option${v===pv?' selected':''}>${v}</option>`).join('');
+}
+
+function filtered() {
+  const q   = document.getElementById('search-input').value.toLowerCase();
+  const fam = document.getElementById('filter-family').value;
+  const ven = document.getElementById('filter-vendor').value;
+  const sta = document.getElementById('filter-status').value;
+  return colors.filter(c => {
+    if (fam && c.colorFamily !== fam) return false;
+    if (ven && c.vendor !== ven) return false;
+    if (sta && c.status !== sta) return false;
+    if (q) {
+      const hay = [c.colorId, c.colorName, c.customer, c.sgd, c.style, c.vendor].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+// ── RENDER ──
+function renderAll() {
+  const rows = filtered();
+  document.getElementById('entry-count').textContent = colors.length + ' entr' + (colors.length === 1 ? 'y' : 'ies');
+  const empty = document.getElementById('empty-state');
+  const vl = document.getElementById('view-list');
+  const vg = document.getElementById('view-gallery');
+  if (colors.length === 0) { empty.style.display=''; vl.style.display='none'; vg.style.display='none'; return; }
+  empty.style.display = 'none';
+  vl.style.display = currentView === 'list' ? '' : 'none';
+  vg.style.display = currentView === 'gallery' ? '' : 'none';
+  if (currentView === 'list') renderList(rows);
+  else renderGallery(rows);
+}
+
+function dot(family) { return `<span class="fdot" style="background:${FC[family]||'#aaa'}"></span>`; }
+
+function renderList(rows) {
+  const tbody = document.getElementById('list-tbody');
+  const empty = document.getElementById('list-empty');
+  if (rows.length === 0) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = rows.map(c => {
+    const idx = colors.indexOf(c);
+    const thumb = c.photo
+      ? `<img class="thumb-sm" src="${c.photo}" alt="">`
+      : `<div class="thumb-ph"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><circle cx="5.5" cy="5.5" r="1"/><path d="M14 10l-4-4-4 4"/></svg></div>`;
+    const sgd = c.sgd ? c.sgd.split('\n').map((s,i)=>i===0?`<span class="sgd-main">${s}</span>`:`<br>${s}`).join('') : '—';
+    const sc = c.status === 'Live' ? 'badge-live' : 'badge-draft';
+    return `<tr data-idx="${idx}">
+      <td class="thumb-cell">${thumb}</td>
+      <td class="col-id">${c.colorId||'—'}</td>
+      <td>${c.id||'—'}</td>
+      <td class="col-name">${c.colorName||'—'}</td>
+      <td><span class="family-pill">${dot(c.colorFamily)}${c.colorFamily||'—'}</span></td>
+      <td>${c.style||'—'}</td>
+      <td class="col-sgd">${sgd}</td>
+      <td>${c.manager||'—'}</td>
+      <td>${c.customer||'—'}</td>
+      <td>${c.vendor||'—'}</td>
+      <td><span class="badge ${sc}">${c.status||'Draft'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderGallery(rows) {
+  const grid = document.getElementById('gallery-grid');
+  const empty = document.getElementById('gallery-empty');
+  if (rows.length === 0) { grid.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display = 'none';
+  grid.innerHTML = rows.map(c => {
+    const idx = colors.indexOf(c);
+    const photo = c.photo
+      ? `<img class="g-photo" src="${c.photo}" alt="${c.colorName||''}" loading="lazy">`
+      : `<div class="g-photo-ph"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>No photo</span></div>`;
+    const sc = c.status === 'Live' ? 'badge-live' : 'badge-draft';
+    return `<div class="g-card" data-idx="${idx}">
+      ${photo}
+      <div class="g-info">
+        <div class="g-id">${c.colorId||'—'}</div>
+        <div class="g-name">${c.colorName||'Untitled'}</div>
+        <div class="g-meta">
+          <span class="family-pill">${dot(c.colorFamily)}${c.colorFamily||'—'}</span>
+          <span class="badge ${sc}">${c.status||'Draft'}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CLICK HANDLERS ──
+document.getElementById('list-tbody').addEventListener('click', function(e) {
+  const row = e.target.closest('tr[data-idx]');
+  if (row) openDetail(parseInt(row.dataset.idx, 10));
+});
+document.getElementById('gallery-grid').addEventListener('click', function(e) {
+  const card = e.target.closest('.g-card[data-idx]');
+  if (card) openDetail(parseInt(card.dataset.idx, 10));
+});
+
+// ── DETAIL ──
+function openDetail(idx) {
+  const c = colors[idx];
+  if (!c) return;
+  currentId = idx;
+  document.getElementById('detail-title').textContent = (c.colorId||'') + (c.colorName ? ' — '+c.colorName : '');
+  document.getElementById('d-name').value      = c.colorName    || '';
+  document.getElementById('d-family').value    = c.colorFamily  || '';
+  document.getElementById('d-process').value   = c.process      || '';
+  document.getElementById('d-displayed').value = c.displayedOn  || '';
+  document.getElementById('d-style').textContent    = c.style    || '—';
+  document.getElementById('d-fabric').textContent   = c.fabric   || '—';
+  document.getElementById('d-sgd').textContent      = c.sgd      || '—';
+  document.getElementById('d-vendor').textContent   = c.vendor   || '—';
+  document.getElementById('d-customer').textContent = c.customer || '—';
+  setDetailPhoto(c.photo || null, c.colorName);
+  const live = c.status === 'Live';
+  document.getElementById('status-toggle').className = 'toggle' + (live ? ' on' : '');
+  document.getElementById('status-label').textContent = live ? 'Live' : 'Draft';
+  showPage('detail');
+}
+
+function collectFormData() {
+  const c = colors[currentId];
+  c.colorName   = document.getElementById('d-name').value;
+  c.colorFamily = document.getElementById('d-family').value;
+  c.process     = document.getElementById('d-process').value;
+  c.displayedOn = document.getElementById('d-displayed').value;
+  return c;
+}
+
+async function saveEntry(publish) {
+  const c = collectFormData();
+  if (publish) c.status = 'Live';
+  showLoading('Saving…');
+  try {
+    await saveEntryToDB(c);
+    if (publish) {
+      document.getElementById('status-toggle').className = 'toggle on';
+      document.getElementById('status-label').textContent = 'Live';
+    }
+    document.getElementById('detail-title').textContent = (c.colorId||'') + (c.colorName ? ' — '+c.colorName : '');
+    updateSyncTime();
+    toast(publish ? 'Published' : 'Saved');
+  } catch(e) {
+    console.error(e);
+    toast('Save failed — check connection');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function deleteEntry() {
+  if (!confirm('Delete this color entry?')) return;
+  const c = colors[currentId];
+  showLoading('Deleting…');
+  try {
+    await deleteEntryFromDB(c);
+    colors.splice(currentId, 1);
+    buildFilters();
+    showPage('list');
+    toast('Deleted');
+  } catch(e) {
+    toast('Delete failed');
+  } finally {
+    hideLoading();
+  }
+}
+
+function toggleStatus() {
+  const c = colors[currentId]; if (!c) return;
+  c.status = c.status === 'Live' ? 'Draft' : 'Live';
+  const live = c.status === 'Live';
+  document.getElementById('status-toggle').className = 'toggle' + (live ? ' on' : '');
+  document.getElementById('status-label').textContent = c.status;
+}
+
+// ── PHOTO ──
+function setDetailPhoto(src, colorName) {
+  const display = document.getElementById('photo-display');
+  const empty   = document.getElementById('photo-display-empty');
+  const label   = document.getElementById('upload-label');
+  let img = display.querySelector('img.detail-photo');
+  if (src) {
+    if (!img) {
+      img = document.createElement('img');
+      img.className = 'detail-photo';
+      img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+      display.insertBefore(img, display.firstChild);
+    }
+    img.src = src; img.alt = colorName || '';
+    display.classList.add('has-photo');
+    empty.style.display = 'none';
+    label.textContent = 'Replace photo';
+  } else {
+    if (img) img.remove();
+    display.classList.remove('has-photo');
+    empty.style.display = '';
+    label.textContent = 'Upload photo';
+  }
+}
+
+function handlePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    const c = colors[currentId]; if (!c) return;
+    c.photo = ev.target.result;
+    setDetailPhoto(ev.target.result, c.colorName);
+    // Auto-save photo to Supabase immediately
+    showLoading('Saving photo…');
+    try {
+      await saveEntryToDB(c);
+      toast('Photo saved');
+    } catch(err) {
+      toast('Photo save failed');
+    } finally {
+      hideLoading();
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function openLightbox(e) {
+  if (e) e.stopPropagation();
+  const c = colors[currentId]; if (!c || !c.photo) return;
+  document.getElementById('lightbox-img').src = c.photo;
+  document.getElementById('lightbox-label').textContent = (c.colorId||'') + (c.colorName ? ' — '+c.colorName : '');
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ── ADD COLOR ──
+async function addColor() {
+  const id = prompt('Enter a Color ID (e.g. Blue-0042):');
+  if (!id || !id.trim()) return;
+  const cid = id.trim();
+  if (colors.some(c => c.colorId === cid)) { alert('That Color ID already exists.'); return; }
+  const newEntry = { colorId: cid, colorName: '', colorFamily: '', status: 'Draft', photo: null };
+  showLoading('Creating…');
+  try {
+    await saveEntryToDB(newEntry);
+    colors.push(newEntry);
+    buildFilters();
+    openDetail(colors.length - 1);
+  } catch(e) {
+    toast('Could not create entry');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── IMPORT ──
+function openImport()  { document.getElementById('import-overlay').classList.add('open'); }
+function closeImport() { document.getElementById('import-overlay').classList.remove('open'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('drop-zone').classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f) processFile(f); }
+function handleFileSelect(e) { const f = e.target.files[0]; if (f) processFile(f); }
+
+function processFile(file) {
+  closeImport();
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      showLoading('Importing ' + rows.length + ' rows…');
+
+      const toUpsert = [];
+      rows.forEach(row => {
+        function get(...names) {
+          for (const n of names) {
+            const k = Object.keys(row).find(k => k.toLowerCase().replace(/[\s_#]/g,'') === n.toLowerCase().replace(/[\s_#]/g,''));
+            if (k !== undefined && row[k] !== '') return String(row[k]).trim();
+          }
+          return '';
+        }
+        const cid = get('colorid','color id') || '';
+        if (!cid) return;
+
+        // preserve existing photo and status
+        const existing = colors.find(c => c.colorId === cid);
+        toUpsert.push({
+          color_id:     cid,
+          numeric_id:   get('id'),
+          color_name:   get('colorname','color name','name'),
+          color_family: get('colorfamily','color family','family'),
+          style:        get('style#','style','styleno'),
+          fabric:       get('fabric'),
+          sgd:          get('sgd#','sgd'),
+          manager:      get('manager','sampleowner','sample owner'),
+          customer:     get('customer','client'),
+          vendor:       normVendor(get('vendor')),
+          process:      get('process','dyeprocess','dye process'),
+          displayed_on: get('displayedon','displayed on'),
+          rack:         get('rack#','rack'),
+          reference:    get('colorreference','reference'),
+          sample_type:  get('sampletype','sample type'),
+          status:       existing ? existing.status : 'Draft',
+          photo_url:    existing ? (existing.photo || null) : null,
+          updated_at:   new Date().toISOString(),
+        });
+      });
+
+      // Batch upsert to Supabase
+      const CHUNK = 50;
+      for (let i = 0; i < toUpsert.length; i += CHUNK) {
+        await upsertBatch(toUpsert.slice(i, i + CHUNK));
+      }
+
+      // Reload from DB
+      await loadFromDB();
+      toast('Imported ' + toUpsert.length + ' entries');
+    } catch(err) {
+      console.error(err);
+      toast('Import failed — check file format');
+      hideLoading();
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ── LOADING ──
+function showLoading(msg) {
+  document.getElementById('loading-msg').textContent = msg || 'Loading…';
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.remove('show');
+}
+
+// ── TOAST ──
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
 </script>
 </body>
 </html>
