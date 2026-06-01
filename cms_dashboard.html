@@ -387,19 +387,21 @@ const SUPA_URL = 'https://djaovgvcabjadljnguzi.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqYW92Z3ZjYWJqYWRsam5ndXppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNDM0OTYsImV4cCI6MjA5NTkxOTQ5Nn0.Cj9FO-V0EEGHSBMz-JyDJu05HjcMtEA6Rr6vbTg4Cig';
 
 async function sbFetch(path, options = {}) {
+  const headers = {
+    'apikey': SUPA_KEY,
+    'Authorization': 'Bearer ' + SUPA_KEY,
+    'Content-Type': 'application/json',
+  };
+  if (options.prefer) headers['Prefer'] = options.prefer;
   const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
-    ...options,
-    headers: {
-      'apikey': SUPA_KEY,
-      'Authorization': 'Bearer ' + SUPA_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': options.prefer || '',
-      ...options.headers
-    }
+    method: options.method || 'GET',
+    headers,
+    body: options.body || undefined,
   });
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(err);
+    console.error('Supabase error:', res.status, err);
+    throw new Error('HTTP ' + res.status + ': ' + err);
   }
   const text = await res.text();
   return text ? JSON.parse(text) : null;
@@ -516,10 +518,9 @@ async function deleteEntryFromDB(c) {
 
 // ── UPSERT BATCH (import) ──
 async function upsertBatch(rows) {
-  await sbFetch('colors', {
+  await sbFetch('colors?on_conflict=color_id', {
     method: 'POST',
-    prefer: 'return=representation,resolution=merge-duplicates',
-    headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    prefer: 'resolution=merge-duplicates,return=minimal',
     body: JSON.stringify(rows)
   });
 }
@@ -868,18 +869,23 @@ function processFile(file) {
         });
       });
 
+      // Deduplicate by color_id — keep last occurrence (in case Excel has dupes)
+      const deduped = Object.values(
+        toUpsert.reduce((acc, row) => { acc[row.color_id] = row; return acc; }, {})
+      );
+
       // Batch upsert to Supabase
       const CHUNK = 50;
-      for (let i = 0; i < toUpsert.length; i += CHUNK) {
-        await upsertBatch(toUpsert.slice(i, i + CHUNK));
+      for (let i = 0; i < deduped.length; i += CHUNK) {
+        await upsertBatch(deduped.slice(i, i + CHUNK));
       }
 
       // Reload from DB
       await loadFromDB();
-      toast('Imported ' + toUpsert.length + ' entries');
+      toast('Imported ' + deduped.length + ' entries');
     } catch(err) {
       console.error(err);
-      toast('Import failed — check file format');
+      toast('Import failed: ' + (err.message || 'check console for details'));
       hideLoading();
     }
   };
