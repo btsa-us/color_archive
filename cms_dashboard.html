@@ -767,25 +767,44 @@ function setDetailPhoto(src, colorName) {
   }
 }
 
+// ── PHOTO UPLOAD TO SUPABASE STORAGE ──
+async function uploadPhotoToStorage(file, colorId) {
+  const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+  const path = colorId.replace(/[^a-zA-Z0-9-_]/g, '_') + '_' + Date.now() + '.' + ext;
+  const res = await fetch(`${SUPA_URL}/storage/v1/object/photos/${path}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': file.type || 'image/jpeg',
+      'x-upsert': 'true',
+    },
+    body: file,
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Storage upload failed: ' + err);
+  }
+  return `${SUPA_URL}/storage/v1/object/public/photos/${path}`;
+}
+
 function handlePhoto(e) {
   const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async ev => {
-    const c = colors[currentId]; if (!c) return;
-    c.photo = ev.target.result;
-    setDetailPhoto(ev.target.result, c.colorName);
-    // Auto-save photo to Supabase immediately
-    showLoading('Saving photo…');
-    try {
+  const c = colors[currentId]; if (!c) return;
+  showLoading('Uploading photo…');
+  uploadPhotoToStorage(file, c.colorId)
+    .then(async url => {
+      c.photo = url;
+      setDetailPhoto(url, c.colorName);
+      showLoading('Saving…');
       await saveEntryToDB(c);
       toast('Photo saved');
-    } catch(err) {
-      toast('Photo save failed');
-    } finally {
-      hideLoading();
-    }
-  };
-  reader.readAsDataURL(file);
+    })
+    .catch(err => {
+      console.error(err);
+      toast('Upload failed: ' + (err.message || 'check connection'));
+    })
+    .finally(() => hideLoading());
 }
 
 function openLightbox(e) {
