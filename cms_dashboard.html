@@ -768,10 +768,12 @@ function setDetailPhoto(src, colorName) {
 }
 
 // ── PHOTO UPLOAD TO SUPABASE STORAGE ──
+const BUCKET = 'btsaphotos';
+
 async function uploadPhotoToStorage(file, colorId) {
   const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
   const path = colorId.replace(/[^a-zA-Z0-9-_]/g, '_') + '_' + Date.now() + '.' + ext;
-  const res = await fetch(`${SUPA_URL}/storage/v1/object/photos/${path}`, {
+  const res = await fetch(`${SUPA_URL}/storage/v1/object/${BUCKET}/${path}`, {
     method: 'POST',
     headers: {
       'apikey': SUPA_KEY,
@@ -785,7 +787,7 @@ async function uploadPhotoToStorage(file, colorId) {
     const err = await res.text();
     throw new Error('Storage upload failed: ' + err);
   }
-  return `${SUPA_URL}/storage/v1/object/public/photos/${path}`;
+  return `${SUPA_URL}/storage/v1/object/public/${BUCKET}/${path}`;
 }
 
 function handlePhoto(e) {
